@@ -31,7 +31,7 @@ node(label) {
 
 		// #3 빌드 Stage
 		stage('Build') {     
-			container('mvn') {         
+			container('maven') {         
 				sh 'mvn -B clean install'    
 			} 
 		}
