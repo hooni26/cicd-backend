@@ -8,7 +8,33 @@ containerTemplate(name: 'kubectl', image: 'roffe/kubectl', command: 'cat', ttyEn
 node(label) {
     // 예외처리 구문
 	try {
+		// #1 Github 소스 가져오기
+		stage('Get Source') {     git credentialsId: 'github-lab17', url: 'https://github.com/hooni26/cicd-backend.git/', branch: 'master' } 
 		
+		// #2 Properties 파일 읽기		
+		def props = readProperties file:"./kubernetes/pipeline.properties"  
+		def tag = props["version"] 
+		def dockerRegistry = props["dockerRegistry"] 
+		def credentialRegistry=props["credentialRegistry"]  
+		def image = props["image"] 
+		def appname = props["appname"] 
+		def containername = props["containerName"] 
+		def deployment = props["deployment"] 
+		def service = props["service"] 
+		def namespace = props["namespace"] 
+		def sonarQubeURL = props["sonarQubeURL"] 
+		def sonarQubeProject = props["sonarQubeProject"] 
+		// 재배포를 위한 tag를 재정의
+		def timeStamp = System.currentTimeMillis()
+		echo "TimeStamp: ${timeStamp}"
+		tag = tag+"-"+timeStamp
+
+		// #3 빌드 Stage
+		stage('Build') {     
+			container('mvn') {         
+				sh 'mvn -B clean install'    
+			} 
+		}
 		
 		
   } catch(e) {
