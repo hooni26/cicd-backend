@@ -36,7 +36,29 @@ node(label) {
 			} 
 		}
 		
-		
+		// #5 컨테이너 이미지 생성 Stage
+		stage('Dockerizing') {     
+			container('docker') {         
+					docker.withRegistry("${dockerRegistry}", "${credentialRegistry}") 
+					{         
+						sh "docker build -f ./Dockerfile -t ${image}:${tag} ${WORKSPACE}"              
+						sh "docker push ${image}:${tag}"             
+						sh "docker tag ${image}:${tag} ${image}:latest"             
+						sh "docker push ${image}:latest"         
+					}     
+			} 
+		} 
+ 		
+ 
+		// #6 배포 Stage
+	
+		stage('Deploy') {     
+			container('kubectl') {         
+				sh "kubectl apply -n ${namespace} -f ${deployment}"         
+				sh "kubectl apply -n ${namespace} -f ${service}" 
+				sh "kubectl get svc -n ${namespace}"      
+			} 
+		} 
   } catch(e) {
 		// Slack - 빌드 실패시
  
