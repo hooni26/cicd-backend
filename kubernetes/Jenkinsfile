@@ -1,4 +1,5 @@
 def label = "worker-${UUID.randomUUID().toString()}"
+def notifySlack(STATUS, COLOR) {     slackSend channel: '#jenkins-alarm-lab17', message: STATUS+" : " + "${env.JOB_NAME}[${env.BUILD_NUMBER}] (${env.BUILD_URL})", color: COLOR, tokenCredentialId: 'Slack-lab17', teamDomain: 'ibm-teck' } 
 podTemplate(label: label, containers: [
 containerTemplate(name: 'maven', image: 'maven:3.6.2-jdk-8', command: 'cat', ttyEnabled: true),
 containerTemplate(name: "scanner", image: "newtmitch/sonar-scanner", ttyEnabled: true, command:"cat"),
@@ -8,6 +9,9 @@ containerTemplate(name: 'kubectl', image: 'roffe/kubectl', command: 'cat', ttyEn
 node(label) {
     // 예외처리 구문
 	try {
+		// Slack - 빌드 시작시
+		notifySlack("STARTED", "#0000FF")
+		
 		// #1 Github 소스 가져오기
 		stage('Get Source') {     git credentialsId: 'github-lab17', url: 'https://github.com/hooni26/cicd-backend.git/', branch: 'master' } 
 		
@@ -35,6 +39,10 @@ node(label) {
 				sh 'mvn -B clean install'    
 			} 
 		}
+		
+		// Slack - 빌드 성공시
+		notifySlack("SUCCESS", "#00FF00")
+		
 		// #4 SonarQube 정적분석 Stage 
 		stage('Static Code Analysis') {  
 			container('scanner') {    
@@ -66,7 +74,7 @@ node(label) {
 		} 
   } catch(e) {
 		// Slack - 빌드 실패시
- 
+ 		notifySlack("FAILED", "#FF0000") 
 	}
 	}
 }
